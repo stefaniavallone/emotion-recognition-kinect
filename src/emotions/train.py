@@ -1,15 +1,11 @@
-import os
-
 import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping
 
-from emotions.model import create_model, save_model
-
 
 def train_model(model, train_dir,
-                batch_size=64,
-                num_epochs=50,
+                batch_size=32,
+                num_epochs=100,
                 verbose=0):
     train_datagen = ImageDataGenerator(rescale=1. / 255,
                                        shear_range=0.2,
@@ -31,13 +27,12 @@ def train_model(model, train_dir,
         target_size=(48, 48),
         batch_size=batch_size,
         color_mode="grayscale",
-        shuffle=True,
-
+        shuffle=False,
         subset='validation',
         class_mode='categorical')
 
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0,
-                                   patience=10, verbose=1, mode='auto',
+                                   patience=20, verbose=1, mode='auto',
                                    baseline=None, restore_best_weights=True)
 
     history = model.fit(
