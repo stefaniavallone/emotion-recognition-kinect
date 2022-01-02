@@ -3,6 +3,7 @@ numpy==1.18.5
 pandas==1.2.3
 seaborn==0.11.2
 matplotlib==3.5.0
+#pickle5
 
 # ML and CV packages
 scikit-learn==1.0.1

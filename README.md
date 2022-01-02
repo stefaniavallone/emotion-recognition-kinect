@@ -1,27 +1,38 @@
 # Face and Emotion Recognition with MS Kinect
 This project aims to perform face and emotion recognition through a Kinect sensor or a generic webcam. 
 
-The emotion supported are: "Happy", "Sad", "Disgust", "Neutral", "Fear", "Angry", "Surprise". The depth camera of the Kinect Sensor is used to perform Depth Segmentation and reduce face detection false positives. In addition, a confirmation window is used to stabilize the model's predictions. 
+The emotion supported are: "Happy", "Sad", "Disgust", "Neutral", "Fear", "Angry", "Surprise". The depth camera of the Kinect Sensor is used to carry out Depth Segmentation and reduce face detection false positives. In addition, a confirmation window is used to stabilize the model's predictions. 
 
-[GIF]
+The model used is a CNN built from scratch and trained on FER 2013 Dataset. Then, an optimization phase has been performed to obtain the best hyperparameters.
+
+![Demo](./assets/emotionrecognition.gif)
 
 ## Table of contents
    * [Description](#description)
    * [Installation](#installation)
+      * [Dependencies](#dependencies)
+      * [Building Freenect and the python wrapper](#building-freenect-and-the-python-wrapper)
+         * [Drivers](#drivers)
+         * [Python wrapper](#python-wrapper)
    * [Usage](#usage)
       * [Commands](#commands)
-         * []
-   * [Machine Learning Process](#mlprocess)
-      * [Emotions](#emotions)
-         * [Data Exploratory analysis](#data-esploratory-analysis)
-         * [Training and evaluation](#training-and-evaluation)
-         * [Optimization phase](#training)
-         * [ONNX and Inference phase](#onnx-and-inference-phase)
-         * [Improvements for real use]()
-      * [Face Recognition](#face-recognition)
-         * [Face acquisition](#face-acquisition)
-         * [Training phase](#training)
-         * [Inference phase](#inference)
+         * [Dataset and Face acquisition](#dataset-and-face-acquisition)
+         * [Train face recognition](#train-face-recognition)
+         * [Train emotion recognition](#train-emotion-recognition)
+         * [Optimize emotion recognition](#optimize-emotion-recognition)
+         * [Evaluate emotion recognition](#evaluate-emotion-recognition)
+         * [Run the models on Camera or Kinect](#run-the-models-on-camera-or-kinect)
+   * [Machine Learning Process](#machine-learning-process)
+      * [Emotions Recognition](#emotions-recognition)
+         * [Data Exploration and Processing](#data-exploration-and-processing)
+         * [Training and Evaluation](#training-and-evaluation)
+         * [Optimization](#optimization)
+         * [ONNX and Inference](#onnx-and-inference)
+         * [Improvements for real use](#improvements-for-real-use)
+      * [Face Detection and Recognition](#face-detection-and-recognition)
+         * [Dataset acquisition](#dataset-acquisition)
+         * [Training](#training)
+         * [Inference](#inference)
 
 # Description
 The project involves the use of different machine learning models:
@@ -30,7 +41,6 @@ The project involves the use of different machine learning models:
 - emotion recognition, performed with a CNN built from scratch.
 
 We decided to use only FER2013 Dataset and a CNN to understand the difficulties around this task and we tried to improve the accuracy with hyperparameter optimization. Furthermore, we added some CV techniques (confirmation window, depth segmentation) to improve real execution performance.
-
 
 This repository contains the code for:
  * data exploration and processing of the emotions dataset FER2013 (from Kaggle); 
@@ -45,11 +55,11 @@ After cloning or downloading the repository, we suggest you to create a virtual 
 It's important as you need to use specific versions of the libraries used, for compatibility reasons.
 
 ## Dependencies
-Once the venv has been created, install the dependencies with `pip install -r requirements.txt` in a venv enabled shell.
+Once the venv has been created, install the dependencies with `pip3 install -r requirements.txt` in a venv enabled shell.
 
 ## Building Freenect and the python wrapper
 The code can run also on a generic camera, but we used the Kinect to take advantage of the depth sensor to decrease false positives.
-If you don't have a Kinect or you don't want to use the Kinect, you can skip this part.
+If you don't have a Kinect or you don't want to use it, you can skip this part.
 
 ### Drivers
 We built it on Mac OS, based on the Homebrew method described at the following link: [https://openkinect.org/wiki/Getting_Started#OS_X](https://openkinect.org/wiki/Getting_Started#OS_X). With Homebrew you can easily install the Kinect v1 drivers.
@@ -61,7 +71,7 @@ Download the repository [here](https://github.com/OpenKinect/libfreenect/tree/ma
 
 
 # Usage
-Dataset and models are not provided for privacy reasons. So, to run the project you first need to set up the project and resources. 
+Dataset and models are not provided. So, to run the project you first need to set up the project and resources. 
 It implies obtaining and processing the dataset, training and evaluating the models through some scripts and then running the script that process the video stream from the camera/Kinect.
 
 > **NOTE**: The working directory is `src`.
@@ -69,61 +79,69 @@ In the `resources` folder there are the `data` and `models` subfolders, for the 
 Please follow our convention to avoid path errors.
 
 ```
-resources
-  |- data
-     |- emotions
-     |- faces 
-  |- models
-     |- emotions
-     |- faces
+project_root/
+  |- src/
+     ...all_the_code
+  |- resources/
+     |- data/
+        |- emotions/
+        |- faces/
+     |- models/
+        |- emotions/
+        |- faces/
 ```
 
 
 ## Commands
 Here are all the commands you can run:
 
-### Dataset / Face acquisition
+### Dataset and Face acquisition
 This script can be used to collect the photos for training the OpenCV LBPHFaceRecognizer with your faces. You can run this script several times to get photo of more people in different brightness/camera/ambient situations.
 Use `--camera` parameter to choose between more cameras on your pc. The default is 0. Use `--num_photos` to choose the number of photos you want to take. Default is 30. Note that 30 photo could be not sufficient for a good training. Finally, `--name` option is use to specify the label the face is associated with.
 ```bash
-python face_acquisition.py --camera <SOURCE_CAM> --name "<YOUR_NAME>" --num_photos <PHOTOS_TO_CAPTURE>
+python3 face_acquisition.py --camera <SOURCE_CAM> --name "<YOUR_NAME>" --num_photos <PHOTOS_TO_CAPTURE>
 ```
 
 ### Train face recognition 
 
 ```bash
-python face_recognition/dataset_acquisition.py --camera <SOURCE_CAM> --name "<YOUR_NAME>" --num_photos <PHOTOS_TO_CAPTURE>
+python3 face_recognition/dataset_acquisition.py --camera <SOURCE_CAM> --name "<YOUR_NAME>" --num_photos <PHOTOS_TO_CAPTURE>
 ```
 
 ### Train emotion recognition
-You need to get the dataset from [Kaggle](https://www.kaggle.com/deadskull7/fer2013) and process it with the jupyter notebook situated in `src/emotions/dataset_analysis.ipynb`.
+This script allow you to train the emotions model. Note you need first to get the dataset from [Kaggle](https://www.kaggle.com/deadskull7/fer2013) and process it with the jupyter notebook situated in `src/emotions/dataset_analysis.ipynb`.
+The option available are:
+
 ```bash
 python train_emotions.py --train_dir <TRAIN_DIR_PATH> --test_dir <TEST_DIR_PATH> --epochs <NUM_EPOCHS> --batch_size <BATCH_SIZE> --lr <LEARNING_RATE> --decay <LR_DECAY> --dropout <DROPOUT> --l2 <LAMBDA_L2_REGULARIZATION> --kernel <KERNEL_SIZE> 
 ```
 
 ### Optimize emotion recognition
+This script allow you to run a hyperparameters optimization process. 
 ```bash
 python optimize_emotions.py --train_dir <TRAIN_DIR_PATH> --test_dir <TEST_DIR_PATH> --n_trials <NUM_OF_EXPERIMENTS> 
 ```
 
-
 ### Evaluate emotion recognition
+The script is used to evaluate a model. You have to provide the model path with the option `--model_path` and a test directory with the option `--test_dir`. The output you get is the test loss and accuracy and a plot of a normalized confusion matrix.  
 ```bash
-python evaluate_emotions.py --model_path <MODEL_PATH> --test_dir <TEST_DIR_PATH>
+python3 evaluate_emotions.py --model_path <MODEL_PATH> --test_dir <TEST_DIR_PATH>
 ```
 
 ### Run the models on Camera or Kinect
 The script allows you to choose between the several webcams on your PC or kinect through the options `--camera` and `--kinect`. If no option is specified, camera=0 is chosen. It is also required to specify the path of the trained models. The defaults are:  `../resources/models/emotions/emotion` (Tensorflow format) for the emotion model and `../resources/models/faces/faces.yaml`, `../resources/models/faces/faces_labels.bin` for the faces one. Note that the working directory has to be `src` and that the labels file for the faces has to have the `_labels` suffix. 
 ```bash
-python display.py --camera <SOURCE_CAM> --emotion_path <SAVED_EMOTION_MODEL_PATH> --face_path <SAVED_FACES_MODEL_PATH>
-python display.py --kinect True --emotion_path <SAVED_EMOTION_MODEL_PATH> --face_path <SAVED_FACES_MODEL_PATH>
+# Webcam
+python3 display.py --camera <SOURCE_CAM> --emotion_path <SAVED_EMOTION_MODEL_PATH> --face_path <SAVED_FACES_MODEL_PATH>
+# Kinect
+python3 display.py --kinect True --emotion_path <SAVED_EMOTION_MODEL_PATH> --face_path <SAVED_FACES_MODEL_PATH>
 ```
 
 # Machine Learning Process
 In this section, we describe the step we followed to train the two models and use them on a video stream capture from a Camera / Kinect.
 
-## Emotions
-### Data exploration and processing
+## Emotions Recognition
+### Data Exploration and Processing
 We used FER2013 dataset. As a first step, we analyzed the dataset to verify its distribution and verify its content, displaying some images.
 
 We noticed that it is a very difficult dataset, since it has 3 main issues:
@@ -141,13 +159,13 @@ Finally, we decided not to use oversampling techniques and to use the as-is data
 ### Training and Evaluation
 We used a CNN built from scratch, consisting of four convolution layers and two dense layers. We verified that the model was sufficiently powerful and we managed overfitting with regularization techniques such as l2 and dropout.
 
-We split the dataset into 70% training, 20% for validation and 10% for testing, respectively. In the training phase, we used Keras' `ImageDataGenerator` utilities to do some data augmentation and add zoomed and horizontally mirrored images. This allowed us to increase the test phase performance a bit.
+We split the dataset into 70% training, 20% for validation and 10% for testing, respectively. In the training phase, we used Keras' `ImageDataGenerator` utilities to do some data augmentation and add zoomed and horizontally mirrored images. This allowed us to increase the test performance a bit.
 
 
-In the evaluation phase, we plotted a normalized confusion matrix to understand the performance of the model relative to each class. The results were what we expected: a strong polarization towards the most populous classes and an average error spread across all classes. In fact, the performance mirrors the challenges of the dataset.
+In the evaluation phase, we plotted a normalized confusion matrix to understand the performance of the model relative to each class. The results were what we expected: a strong polarization towards the most populous classes and an average error spread across all them. In fact, the performance mirrors the challenges of the dataset.
 
 ### Optimization
-After deciding that the chosen model had performances in line with what was expected, we moved on to the optimization phase, to obtain the best possible hyperparameters and therefore a higher accuracy.
+After deciding that the chosen model had performances in line with what was expected, we moved on to the optimization phase, to obtain better hyperparameters and therefore a higher accuracy.
 We used optuna, an optimization framework specifically designed for this task. 
 
 The hyperparameters we have optimized are:
@@ -155,8 +173,8 @@ The hyperparameters we have optimized are:
    'lr': learning rate, uniform distribution from 1e-5 to 1e-1,
    'decay': lr decay, uniform distribution from 1e-7 to 1e-4,
    'dropout': uniform distribution from 0.10 to 0.50,
-   'l2': l2 regularization in Conv2D layer, uniform distribution from 0.01 to 0.05,
-   'kernel_size': for Conv2D layer in range [3, 5],
+   'l2': l2 regularization in Conv2D layers, uniform distribution from 0.01 to 0.05,
+   'kernel_size': for Conv2D layers in range [3, 5],
    'batch_size': in range [16, 32, 64, 128],
 ```
 The best hyperparameters, found in 50 iterations, are:
@@ -169,7 +187,7 @@ The best hyperparameters, found in 50 iterations, are:
    'batch_size': 32,
 ```
 
-with a test loss of: `X.XXX`, and test accuracy of: `66.035%`. 
+with a test loss of: `1.0534`, and test accuracy of: `66.035%`. 
 
 ### ONNX and Inference
 To speed up the inference phase, we setup up the ONNX conversion and runtime tools.
@@ -203,18 +221,17 @@ A confirmation window is associated for each recognized person, so as not to mix
 
 We also took advantage of the Kinect's depth camera to segment and filter objects based on depth. This allows us to reduce the number of false positives of face detection. Since there is no rejection threshold for face recognition, limiting false positives also allows the predictions contained in the confirmation window to be "not dirty", thus resulting in a reliable prediction.
 
-## Face detection and Recognition
-### Dataset acquisition
-Run the following command to capture some photos for the training dataset:
-```bash
-python face_recognition/dataset_acquisition.py --camera <SOURCE_CAM> --name "<YOUR_NAME>" --num_photos <PHOTOS_TO_CAPTURE>
-```
 
-For example:
-```bash
-python face_recognition/dataset_acquisition.py --camera 0 --name "Stefania" --num_photos 30
-```
+## Face Detection and Recognition
+### Dataset acquisition
+To train face recognition we created a script that allowed us to collect images of a person's faces. The script must be configured by passing as parameters the name and the number of photos to be saved. The process uses opencv's face detector to automatically extract faces and save them by labeling them with the name entered.
+This also allowed us to quickly review the saved photos and delete dirty data if any.
+To have good recognition performance we used about 100 photos per person; results clearly vary in different lighting conditions.
+
 
 ### Training
+The training of opencv's LBPHFaceRecognizer is very quick. We trained it on two different faces, but it's scalable on multiple faces.
 
-### Inference phase
+
+### Inference
+For the inference phase we used the labels extracted from the LBPHFaceRecognizer of opencv trained as described in the previous point to create Confirmation Windows for each person and then isolate the emotions based on the detected face.
